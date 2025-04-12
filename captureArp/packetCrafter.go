@@ -9,7 +9,7 @@ import (
 )
 
 // TODO: make a packet sender
-
+// NOTE : So we just need to send arp replay to all devices in the LAN inorder to get mitm
 var (
 	buffer gopacket.SerializableLayer;
 	option gopacket.SerializableLayer;
