@@ -46,7 +46,15 @@ func craft_ethernet(targetHard []byte, attackerHard []byte) *layers.Ethernet {
 func getTargetMac(targetIp []byte){
 
 }
+
 func Packet(handler *pcap.Handle) {
-	// gopacket.SerializableLayer(buffer, option, &layers.Ethernet{}, &layers.ARP{})
+
+    mac := net.HardwareAddr{0xFF, 0xAA, 0xFA, 0xAA, 0xFF, 0xAA};
+    ip := net.IP{192,168,0,2};
+    buffer := gopacket.NewSerializeBuffer();
+
+    eth := craft_ethernet(mac,mac);
+    arp := craft_arp(mac, mac, mac, mac, layer);
+	gopacket.SerializableLayer(buffer, option, &layers.Ethernet{}, &layers.ARP{})
     
 }
