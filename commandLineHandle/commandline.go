@@ -2,10 +2,11 @@ package commandlinehandle
 
 import (
 	"flag"
-	"net"
-	"regexp"
 	"fmt"
+	"log"
+	"net"
 )
+
 type CommandLineArgs struct {
 	AttackerMAC    string
 	VictimMAC      string
@@ -13,31 +14,47 @@ type CommandLineArgs struct {
 	DefaultGateway string
 }
 
-
-// TODO: Rename the command line argumet make them easier
-func CommandLineArgsGen() CommandLineArgs {
-	var args CommandLineArgs
-
-	flag.StringVar(&args.AttackerMAC, "attacker-mac", "", "Attacker's MAC address (e.g., 00:11:22:33:44:55)")
-	flag.StringVar(&args.VictimMAC, "victim-mac", "", "Victim's MAC address")
-	flag.StringVar(&args.VictimIP, "victim-ip", "", "Victim's IP address")
-	flag.StringVar(&args.DefaultGateway, "gateway", "", "Default gateway IP address")
-
-	flag.Parse()
-
-	validateMAC := func(mac string) bool {
-		match, _ := regexp.MatchString(`^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$`, mac)
-		return match
-	}
-
-	if !validateMAC(args.AttackerMAC) || !validateMAC(args.VictimMAC) {
-		fmt.Println("[-] Invalid MAC address format.")
-	}
-
-	if net.ParseIP(args.VictimIP) == nil || net.ParseIP(args.DefaultGateway) == nil {
-		fmt.Println("[-] Invalid IP address format.")
-	}
-
-	return args
+type ParsedCommandLine struct {
+	AttackerMAC    net.HardwareAddr
+	VictimMAC      net.HardwareAddr
+	VictimIP       net.IP
+	DefaultGateway net.IP
 }
 
+func CommandLineArgsGen() ParsedCommandLine {
+	var args CommandLineArgs
+	var parsed ParsedCommandLine
+
+	flag.StringVar(&args.AttackerMAC, "amac", "", "Attacker's MAC address (e.g., 00:11:22:33:44:55)")
+	flag.StringVar(&args.VictimMAC, "vmac", "", "Victim's MAC address")
+	flag.StringVar(&args.VictimIP, "vip", "", "Victim's IP address")
+	flag.StringVar(&args.DefaultGateway, "dip", "", "Default gateway IP address")
+
+	fmt.Printf("[+] Parsed: %+v\n", args)
+	flag.Parse()
+
+	Amac, err := net.ParseMAC(args.AttackerMAC)
+	if err != nil {
+		log.Fatal("Error: ", err)
+	}
+	parsed.AttackerMAC = Amac
+
+	Vmac, err := net.ParseMAC(args.VictimMAC)
+	if err != nil {
+		log.Fatal("Error: ", err)
+	}
+	parsed.VictimMAC = Vmac
+
+	Dip := net.ParseIP(args.DefaultGateway)
+	if Dip == nil {
+		log.Fatal("Error: Ip address is not valid")
+	}
+	parsed.DefaultGateway = Dip
+
+	Vip := net.ParseIP(args.VictimIP)
+	if Vip == nil {
+		log.Fatal("Error: Ip address is not valid")
+	}
+	parsed.VictimIP = Vip
+	return parsed
+}

