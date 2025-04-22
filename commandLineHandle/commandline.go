@@ -49,12 +49,12 @@ func CommandLineArgsGen() ParsedCommandLine {
 	if Dip == nil {
 		log.Fatal("Error: Ip address is not valid")
 	}
-	parsed.DefaultGateway = Dip
+	parsed.DefaultGateway = Dip.To4()
 
 	Vip := net.ParseIP(args.VictimIP)
 	if Vip == nil {
 		log.Fatal("Error: Ip address is not valid")
 	}
-	parsed.VictimIP = Vip
+	parsed.VictimIP = Vip.To4()
 	return parsed
 }
