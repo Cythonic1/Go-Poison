@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/gopacket/pcap"
 	"arp_poision/commandLineHandle"
+	_ "arp_poision/utilites"
 )
 
 var (
@@ -18,10 +19,10 @@ var (
 )
 
 func main() {
-	
 	args := commandlinehandle.CommandLineArgsGen();
 	fmt.Printf("[+] Parsed: %+v\n", args)
 
+	// iface := utilites.Display_interfaces();
 	handle, err := pcap.OpenLive(device, snapShotLen, promiscuous, timeout);
 	if err != nil {
 		log.Fatal("main func " ,err);

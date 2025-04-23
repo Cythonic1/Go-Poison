@@ -1,6 +1,7 @@
 package captureArp
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -23,6 +24,25 @@ var (
 	option gopacket.SerializableLayer
 )
 
+func craft_ip(attackerIp net.IP, destIp net.IP) *layers.IPv4 {
+	ip := &layers.IPv4 {
+		SrcIP: attackerIp,
+		DstIP: destIp,
+		Protocol: layers.IPProtocolICMPv4,
+
+	}
+	return ip;
+}
+func craft_icmp() *layers.ICMPv4{
+	icmp := &layers.ICMPv4{
+		TypeCode: layers.CreateICMPv4TypeCode(layers.ICMPv4TypeEchoRequest, 0), 
+        Id:       0x1234,
+		Seq: 0,
+	}
+	
+
+	return icmp;
+}
 func craft_arp(attackerMac net.HardwareAddr, targeMac net.HardwareAddr, getwayIp net.IP, targetIp net.IP, op uint16) *layers.ARP {
 	arp := &layers.ARP{
 		AddrType:          layers.LinkTypeEthernet,
@@ -65,7 +85,8 @@ func Packet(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine) {
 		if err != nil {
 			log.Fatal("Error serilize the packet ", err)
 		}
-		time.Sleep(2 * time.Second)
+		fmt.Printf("Sending ARP packet\n");
+		time.Sleep(2 * time.Second);
 	}
 
 	log.Printf("Everything goes as expected packet has been sent \n")
