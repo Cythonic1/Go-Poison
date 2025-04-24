@@ -69,7 +69,7 @@ func arp_operation(op int32) (string) {
 	}
 
 }
-func Sniff_arp(){
+func Sniff_arp(attackerIp net.IP){
 
 	handle, err := pcap.OpenLive(device, snapShotLen, promiscuous, timeout);
 	if err != nil {
@@ -82,19 +82,22 @@ func Sniff_arp(){
 	for packet := range packetSource.Packets(){
 		if arpLayer := packet.Layer(layers.LayerTypeARP); arpLayer != nil {
 			if arp, ok := arpLayer.(*layers.ARP); ok {
-				fmt.Println("⚡ ARP Detected ⚡");
-				fmt.Printf("Sender MAC: %s\n", net.HardwareAddr(arp.SourceHwAddress));
-				fmt.Printf("Sender IP: %s\n", net.IP(arp.SourceProtAddress));
-				fmt.Printf("Target MAC: %s\n", net.HardwareAddr(arp.DstHwAddress));
-				fmt.Printf("Target IP: %s\n", net.IP(arp.DstProtAddress));
-				fmt.Printf("Arp Operation: %s\n", arp_operation(int32(arp.Operation)));
-				fmt.Println("-------------------------------------------------")
+
+				if net.IP(arp.DstProtAddress).Equal(attackerIp)  {
+					fmt.Println("⚡ ARP Detected ⚡");
+					fmt.Printf("Sender MAC: %s\n", net.HardwareAddr(arp.SourceHwAddress));
+					fmt.Printf("Sender IP: %s\n", net.IP(arp.SourceProtAddress));
+					fmt.Printf("Target MAC: %s\n", net.HardwareAddr(arp.DstHwAddress));
+					fmt.Printf("Target IP: %s\n", net.IP(arp.DstProtAddress));
+					fmt.Printf("Arp Operation: %s\n", arp_operation(int32(arp.Operation)));
+					fmt.Println("-------------------------------------------------")
+				}
 			}
 
 		}
 	}
 }
-func Sniffing(){
+func Sniffing(attackerIp net.IP){
 	handle, err := pcap.OpenLive(device, snapShotLen, promiscuous, timeout);
 	if err != nil {
 		Exit_err(err);

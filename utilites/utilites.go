@@ -9,7 +9,7 @@ import (
 )
 
 
-func Display_interfaces() string{
+func Display_interfaces() pcap.Interface{
 	var iface int;
 	interfaces, err := pcap.FindAllDevs()
 	if err != nil {
@@ -21,7 +21,7 @@ func Display_interfaces() string{
 	fmt.Scanln(&iface);
 
 	fmt.Printf("The interface u chose is %s\n", interfaces[iface].Name)
-	return interfaces[iface].Name
+	return interfaces[iface]
 }
 
 func print_addresses(addr pcap.Interface){
