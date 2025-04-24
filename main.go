@@ -7,6 +7,7 @@ import (
 	_ "fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/google/gopacket/pcap"
@@ -21,28 +22,37 @@ var (
 )
 
 func main() {
-	// args := commandlinehandle.CommandLineArgsGen()
-	// fmt.Printf("[+] Parsed: %+v\n", args)
-
-	var args commandlinehandle.ParsedCommandLine;
+	var args commandlinehandle.ParsedCommandLine
 
 	iface := utilites.Display_interfaces()
-	// NOTE: This represent the attacker IP at the moment
-	args.DefaultGateway = iface.Addresses[0].IP.To4();
-	mac , err := net.ParseMAC("f4:b5:20:53:5f:59");
+
+	// Attacker IP
+	args.DefaultGateway = iface.Addresses[0].IP.To4()
+
+	// Attacker MAC
+	mac, err := net.ParseMAC("f4:b5:20:53:5f:59")
 	if err != nil {
-		log.Fatal("Parsing attacker mac");
+		log.Fatal("Parsing attacker mac")
 	}
-	args.AttackerMAC = mac;
+	args.AttackerMAC = mac
+
 	handle, err := pcap.OpenLive(iface.Name, snapShotLen, promiscuous, timeout)
 	if err != nil {
 		log.Fatal("main func ", err)
 	}
-	
-	go captureArp.Sniff_arp(args.DefaultGateway)
-	go captureArp.Discover_devices(handle , args , args.DefaultGateway );
 	defer handle.Close()
 
-	// captureArp.Packet_poison(handle, args)
-	// captureArp.Sniff_arp()
+	// Prepare wait group
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		captureArp.Sniff_arp(args.DefaultGateway)
+	}()
+
+	time.Sleep(5 * time.Second);
+	go captureArp.Discover_devices(handle, args, args.DefaultGateway)
+
+	wg.Wait()
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	commandlinehandle "arp_poision/commandLineHandle"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -95,7 +94,8 @@ func Discover_devices(handler *pcap.Handle, args commandlinehandle.ParsedCommand
 		if err != nil {
 			log.Fatal("Error serilize the packet HELLO ", err)
 		}
-		println("Sending")
+		println("Packet Number ", i);
+		time.Sleep(1 * time.Second)
 	}
 
 	log.Printf("Everything goes as expected packet has been sent \n")

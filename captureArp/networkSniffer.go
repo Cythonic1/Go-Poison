@@ -82,8 +82,7 @@ func Sniff_arp(attackerIp net.IP){
 	for packet := range packetSource.Packets(){
 		if arpLayer := packet.Layer(layers.LayerTypeARP); arpLayer != nil {
 			if arp, ok := arpLayer.(*layers.ARP); ok {
-
-				if net.IP(arp.DstProtAddress).Equal(attackerIp)  {
+				if arp.Operation == layers.ARPReply && net.IP(arp.DstProtAddress).To16().Equal(attackerIp.To4()){
 					fmt.Println("⚡ ARP Detected ⚡");
 					fmt.Printf("Sender MAC: %s\n", net.HardwareAddr(arp.SourceHwAddress));
 					fmt.Printf("Sender IP: %s\n", net.IP(arp.SourceProtAddress));
@@ -91,6 +90,7 @@ func Sniff_arp(attackerIp net.IP){
 					fmt.Printf("Target IP: %s\n", net.IP(arp.DstProtAddress));
 					fmt.Printf("Arp Operation: %s\n", arp_operation(int32(arp.Operation)));
 					fmt.Println("-------------------------------------------------")
+
 				}
 			}
 
