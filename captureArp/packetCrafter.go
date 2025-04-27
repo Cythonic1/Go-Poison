@@ -64,7 +64,7 @@ func craft_ethernet(targetHard net.HardwareAddr, attackerHard net.HardwareAddr) 
 	return ether
 }
 
-func Discover_devices(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine, attackerIp net.IP){
+func Discover_devices(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine, attackerIp net.IP, ch chan string){
 	buffer := gopacket.NewSerializeBuffer()
 	broadcast_mac_eth, err := net.ParseMAC("ff:ff:ff:ff:ff:ff");
 	if err != nil {
@@ -95,11 +95,12 @@ func Discover_devices(handler *pcap.Handle, args commandlinehandle.ParsedCommand
 			log.Fatal("Error serilize the packet HELLO ", err)
 		}
 		println("Packet Number ", i);
-		time.Sleep(1 * time.Second)
+		time.Sleep(300 * time.Millisecond)
 	}
-
+	ch <- "done";
 	log.Printf("Everything goes as expected packet has been sent \n")
 	log.Println("Eth ", eth)
+	return;
 }
 
 func Packet_poison(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine) {

@@ -4,7 +4,7 @@ import (
 	"arp_poision/captureArp"
 	commandlinehandle "arp_poision/commandLineHandle"
 	"arp_poision/utilites"
-	_ "fmt"
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -23,9 +23,11 @@ var (
 
 func main() {
 	var args commandlinehandle.ParsedCommandLine
+	ch := make(chan string);
 
 	iface := utilites.Display_interfaces()
 
+	var targets []*captureArp.Target;
 	// Attacker IP
 	args.DefaultGateway = iface.Addresses[0].IP.To4()
 
@@ -44,15 +46,24 @@ func main() {
 
 	// Prepare wait group
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
-		captureArp.Sniff_arp(args.DefaultGateway)
+		captureArp.Sniff_arp(args.DefaultGateway, ch, &targets)
 	}()
 
 	time.Sleep(5 * time.Second);
-	go captureArp.Discover_devices(handle, args, args.DefaultGateway)
+	go func(){
+		defer wg.Done()
+		captureArp.Discover_devices(handle, args, args.DefaultGateway, ch);
+	}()
 
 	wg.Wait()
+	close(ch);
+
+	log.Println("All tasks completed, exiting.")
+	for _, target := range targets {
+		fmt.Printf("target mac %s, target IP %s\n", target.TargetMac, target.TargetIp)
+	}
 }
