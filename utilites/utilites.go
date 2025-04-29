@@ -5,18 +5,17 @@ import (
 	"log"
 	"net"
 
-	"github.com/google/gopacket/pcap"
 )
 
 
-func Display_interfaces() pcap.Interface{
+func Display_interfaces() net.Interface{
 	var iface int;
-	interfaces, err := pcap.FindAllDevs()
+	interfaces, err := net.Interfaces();
 	if err != nil {
 		log.Fatal("Error while listing interfaces");
 	}
 	fmt.Println("🌐 Available Network Interfaces:")
-	Print_devices(interfaces);
+	print_devices(interfaces);
 	fmt.Printf("Enter interface ID:");
 	fmt.Scanln(&iface);
 
@@ -24,20 +23,37 @@ func Display_interfaces() pcap.Interface{
 	return interfaces[iface]
 }
 
-func print_addresses(addr pcap.Interface){
-	for _, address := range addr.Addresses {
-		fmt.Printf("\tIPv4: %s\n", address.IP);
-		fmt.Printf("\tSubnet Mask: %s\n", net.IP(address.Netmask).String())
+func print_addresses(addrs []net.Addr) {
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		ip := ipNet.IP
+		mask := ipNet.Mask
+
+		if ip.To4() != nil {
+			fmt.Printf("\tIPv4: %s\n", ip.String())
+			fmt.Printf("\tSubnet Mask: %s\n", net.IP(mask).String())
+		}
 	}
 }
-func Print_devices(devices[] pcap.Interface){
+
+func print_devices(devices []net.Interface) {
 	for i, dev := range devices {
-		fmt.Printf("ID: %d\n",i )
-		fmt.Printf("device name : %s\n", dev.Name);
-		fmt.Printf("device description : %s\n", dev.Description);
-		fmt.Printf("device address: \n");
-		print_addresses(dev);
-		fmt.Printf("-------------------------------------------------\n");
+		fmt.Printf("ID: %d\n", i)
+		fmt.Printf("Device Name: %s\n", dev.Name)
+		fmt.Printf("Hardware Addr (MAC): %s\n", dev.HardwareAddr.String())
+
+		addrs, err := dev.Addrs()
+		if err != nil {
+			log.Printf("🛑 Error getting addresses for %s: %v\n", dev.Name, err)
+			continue
+		}
+
+		fmt.Println("Device Addresses:")
+		print_addresses(addrs)
+		fmt.Println("-------------------------------------------------")
 	}
 }
 

@@ -6,8 +6,12 @@
 ## TODO:
 
 ### Add packet sender (Done)
-### add dynamic ip or mac discovery
-### Pars Command line arguments
+### add dynamic ip or mac discovery (Done)
+### Pars Command line arguments (Done)
+### FIX: issues in the packetCraft.
+### Refactor the main function.
+### Complete the dynamic parsing
+### FIX: Import cycle
 
 ## thoughts:
 ### to achive the dynamic discovery there are two ways:

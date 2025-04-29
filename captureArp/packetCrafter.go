@@ -1,12 +1,12 @@
 package captureArp
 
 import (
+	commandlinehandle "arp_poision/commandLineHandle"
 	"fmt"
 	"log"
 	"net"
 	"time"
 
-	commandlinehandle "arp_poision/commandLineHandle"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -64,13 +64,13 @@ func craft_ethernet(targetHard net.HardwareAddr, attackerHard net.HardwareAddr) 
 	return ether
 }
 
-func Discover_devices(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine, attackerIp net.IP, ch chan string){
+func Discover_devices(handler *pcap.Handle, attackerMac net.HardwareAddr, attackerIp net.IP, ch chan string){
 	buffer := gopacket.NewSerializeBuffer()
 	broadcast_mac_eth, err := net.ParseMAC("ff:ff:ff:ff:ff:ff");
 	if err != nil {
 		log.Fatal("parse Ethe mac ", err);
 	}
-	eth := craft_ethernet(broadcast_mac_eth, args.AttackerMAC)
+	eth := craft_ethernet(broadcast_mac_eth, attackerMac)
 	// FIXED: Make a function that convert these type and parse them and check them
 	broadcast_mac_arp, err := 	net.ParseMAC("00:00:00:00:00:00");
 	if err != nil {
@@ -80,7 +80,7 @@ func Discover_devices(handler *pcap.Handle, args commandlinehandle.ParsedCommand
 	for i := 1; i < 256 ; i++{
 
 		fullIP := fmt.Sprintf("%s%d", ip, i);
-		arp := craft_arp(args.AttackerMAC, broadcast_mac_arp, attackerIp, net.ParseIP(fullIP).To4(), layers.ARPRequest)
+		arp := craft_arp(attackerMac, broadcast_mac_arp, attackerIp, net.ParseIP(fullIP).To4(), layers.ARPRequest)
 		opt := gopacket.SerializeOptions{
 			FixLengths:       true,
 			ComputeChecksums: true,

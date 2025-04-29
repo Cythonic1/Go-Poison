@@ -1,13 +1,11 @@
 package main
 
 import (
-	"arp_poision/captureArp"
 	commandlinehandle "arp_poision/commandLineHandle"
 	"arp_poision/utilites"
-	"fmt"
 	"log"
 	"net"
-	"sync"
+	"os"
 	"time"
 
 	"github.com/google/gopacket/pcap"
@@ -22,14 +20,23 @@ var (
 )
 
 func main() {
-	var args commandlinehandle.ParsedCommandLine
-	ch := make(chan string);
 
 	iface := utilites.Display_interfaces()
 
-	var targets []*captureArp.Target;
+	handle, err := pcap.OpenLive(iface.Name, snapShotLen, promiscuous, timeout)
+	if err != nil {
+		log.Fatal("main func ", err)
+	}
+	defer handle.Close()
+	var args commandlinehandle.ParsedCommandLine
+	// args := commandlinehandle.CommandLineArgsGen();
+	asrgs := os.Args;
+	commandlinehandle.CommandLineChecker(asrgs, handle);
+	ch := make(chan string);
+
+
 	// Attacker IP
-	args.DefaultGateway = iface.Addresses[0].IP.To4()
+	// args.DefaultGateway = iface.Addresses[0].IP.To4()
 
 	// Attacker MAC
 	mac, err := net.ParseMAC("f4:b5:20:53:5f:59")
@@ -38,32 +45,8 @@ func main() {
 	}
 	args.AttackerMAC = mac
 
-	handle, err := pcap.OpenLive(iface.Name, snapShotLen, promiscuous, timeout)
-	if err != nil {
-		log.Fatal("main func ", err)
-	}
-	defer handle.Close()
 
 	// Prepare wait group
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		captureArp.Sniff_arp(args.DefaultGateway, ch, &targets)
-	}()
-
-	time.Sleep(5 * time.Second);
-	go func(){
-		defer wg.Done()
-		captureArp.Discover_devices(handle, args, args.DefaultGateway, ch);
-	}()
-
-	wg.Wait()
 	close(ch);
 
-	log.Println("All tasks completed, exiting.")
-	for _, target := range targets {
-		fmt.Printf("target mac %s, target IP %s\n", target.TargetMac, target.TargetIp)
-	}
 }
