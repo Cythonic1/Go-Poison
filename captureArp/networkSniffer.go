@@ -96,15 +96,15 @@ func Sniff_arp(attackerIp net.IP, ch chan string, targets *[]*Target) {
 			// Check if the packet is an ARP packet
 			if arpLayer := packet.Layer(layers.LayerTypeARP); arpLayer != nil {
 				if arp, ok := arpLayer.(*layers.ARP); ok {
-					if arp.Operation == layers.ARPReply && net.IP(arp.DstProtAddress).To16().Equal(attackerIp.To4()) { // attackerIp
-						fmt.Println("⚡ ARP Detected ⚡")
-						fmt.Printf("Sender MAC: %s\n", net.HardwareAddr(arp.SourceHwAddress))
-						fmt.Printf("Sender IP: %s\n", net.IP(arp.SourceProtAddress))
-						fmt.Printf("Target MAC: %s\n", net.HardwareAddr(arp.DstHwAddress))
-						fmt.Printf("Target IP: %s\n", net.IP(arp.DstProtAddress))
-						fmt.Printf("Arp Operation: %s\n", arp_operation(int32(arp.Operation)))
-						fmt.Println("-------------------------------------------------")
-						tar := targetFactory(net.HardwareAddr(arp.DstHwAddress), net.IP(arp.SourceProtAddress));
+					if arp.Operation == layers.ARPReply && net.IP(arp.DstProtAddress).To16().Equal(attackerIp) { // attackerIp
+						// fmt.Println("⚡ ARP Detected ⚡")
+						// fmt.Printf("Sender MAC: %s\n", net.HardwareAddr(arp.SourceHwAddress))
+						// fmt.Printf("Sender IP: %s\n", net.IP(arp.SourceProtAddress))
+						// fmt.Printf("Target MAC: %s\n", net.HardwareAddr(arp.DstHwAddress))
+						// fmt.Printf("Target IP: %s\n", net.IP(arp.DstProtAddress))
+						// fmt.Printf("Arp Operation: %s\n", arp_operation(int32(arp.Operation)))
+						// fmt.Println("-------------------------------------------------")
+						tar := targetFactory(net.HardwareAddr(arp.SourceHwAddress), net.IP(arp.SourceProtAddress));
 						*targets = append(*targets, tar) // ✅ Now updating the real slice
 						
 					}

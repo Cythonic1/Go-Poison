@@ -1,4 +1,4 @@
-# Go Poision
+# Go Poison
 
 ## A Arp Poisoning tool in go.
 
@@ -8,13 +8,14 @@
 ### Add packet sender (Done)
 ### add dynamic ip or mac discovery (Done)
 ### Pars Command line arguments (Done)
-### FIX: issues in the packetCraft.
-### Refactor the main function.
-### Complete the dynamic parsing
-### FIX: Import cycle
+### FIX: issues in the packetCraft. FIXED
+### Refactor the main function. FIXED
+### Complete the dynamic parsing. FIXED
+### FIX: Import cycle. FIXED
+### Add packet capturing for the poisoned Device
 
 ## thoughts:
-### to achive the dynamic discovery there are two ways:
+### to achieve the dynamic discovery there are two ways:
 1. i can make it to construct something like a hash map and discover devices and when the user click something\
     it will stop and then let the user chose which is the target and which is the Default gateway as for the attacker info he can enter them him self.
 2. i can make it send a ping message to all devices in the LAN and which response i will be having all info about them Mac and IP and make the attacker life more easier.

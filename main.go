@@ -4,7 +4,6 @@ import (
 	commandlinehandle "arp_poision/commandLineHandle"
 	"arp_poision/utilites"
 	"log"
-	"net"
 	"os"
 	"time"
 
@@ -28,25 +27,7 @@ func main() {
 		log.Fatal("main func ", err)
 	}
 	defer handle.Close()
-	var args commandlinehandle.ParsedCommandLine
-	// args := commandlinehandle.CommandLineArgsGen();
-	asrgs := os.Args;
-	commandlinehandle.CommandLineChecker(asrgs, handle);
-	ch := make(chan string);
 
-
-	// Attacker IP
-	// args.DefaultGateway = iface.Addresses[0].IP.To4()
-
-	// Attacker MAC
-	mac, err := net.ParseMAC("f4:b5:20:53:5f:59")
-	if err != nil {
-		log.Fatal("Parsing attacker mac")
-	}
-	args.AttackerMAC = mac
-
-
-	// Prepare wait group
-	close(ch);
-
+	args := os.Args;
+	commandlinehandle.CommandLineChecker(args, handle, iface);
 }

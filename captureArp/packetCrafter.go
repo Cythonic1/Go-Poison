@@ -1,7 +1,7 @@
 package captureArp
 
 import (
-	commandlinehandle "arp_poision/commandLineHandle"
+	"arp_poision/shared"
 	"fmt"
 	"log"
 	"net"
@@ -70,12 +70,15 @@ func Discover_devices(handler *pcap.Handle, attackerMac net.HardwareAddr, attack
 	if err != nil {
 		log.Fatal("parse Ethe mac ", err);
 	}
+
+	spin := []rune{'|', '/', '-', '\\'} // classic terminal hacker look
 	eth := craft_ethernet(broadcast_mac_eth, attackerMac)
 	// FIXED: Make a function that convert these type and parse them and check them
 	broadcast_mac_arp, err := 	net.ParseMAC("00:00:00:00:00:00");
 	if err != nil {
 		log.Fatal("Error parsing target mac in discovery ", err);
 	}
+	spinIndex := 0
 	ip := "192.168.0.";
 	for i := 1; i < 256 ; i++{
 
@@ -88,22 +91,23 @@ func Discover_devices(handler *pcap.Handle, attackerMac net.HardwareAddr, attack
 
 		err = gopacket.SerializeLayers(buffer, opt, eth, arp)
 		if err != nil {
+	
 			log.Fatal("Error serilize the packet ", err)
 		}
 		err = handler.WritePacketData(buffer.Bytes())
 		if err != nil {
 			log.Fatal("Error serilize the packet HELLO ", err)
 		}
-		println("Packet Number ", i);
-		time.Sleep(300 * time.Millisecond)
+		fmt.Printf("\r[%c] Scanning %s", spin[spinIndex%len(spin)], fullIP)
+		spinIndex++
+		time.Sleep(200 * time.Millisecond)
 	}
 	ch <- "done";
 	log.Printf("Everything goes as expected packet has been sent \n")
-	log.Println("Eth ", eth)
 	return;
 }
 
-func Packet_poison(handler *pcap.Handle, args commandlinehandle.ParsedCommandLine) {
+func Packet_poison(handler *pcap.Handle, args shared.ParsedCommandLine) {
 	buffer := gopacket.NewSerializeBuffer()
 	eth := craft_ethernet(args.VictimMAC, args.AttackerMAC)
 	// FIXED: Make a function that convert these type and parse them and check them
