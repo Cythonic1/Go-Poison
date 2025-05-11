@@ -82,3 +82,11 @@ sudo gopoizn dynamic
 
 ## 📜 License
 MIT License
+
+
+## TODOs ✋
+- Some fixes require
+- scanning dynamic range
+- some code cleaning
+
+

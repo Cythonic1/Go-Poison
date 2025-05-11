@@ -102,7 +102,6 @@ func checkDynamic(handler *pcap.Handle , iface net.Interface) {
 	}
 	user_command.AttackerIP = addr[0].String()
 	user_command.AttackerMAC = iface.HardwareAddr.String()
-	println(user_command.AttackerIP);
 
 	// Then we want to discover devices inorder to fill up the rest
 
@@ -128,7 +127,6 @@ func checkDynamic(handler *pcap.Handle , iface net.Interface) {
 	user_command.VictimMAC = targets[target_index].TargetMac.String();
 	user_command.VictimIP = targets[target_index].TargetIp.String();
 
-	fmt.Println("User command Structure look like this ", user_command);
 
 	// Parsing the given arguments
 	parsed := CommandLineArgsGen(user_command);
