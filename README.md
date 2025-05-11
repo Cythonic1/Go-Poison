@@ -1,5 +1,7 @@
 # 🦍 ARP Poisoning Toolkit
 
+![gopoizn Logo](./images/gopoizn_logo.png)
+
 A CLI tool for performing **ARP poisoning (spoofing)** attacks, built in Go using the `gopacket` and `pcap` libraries. Supports both **static** and **dynamic** modes for targeting victims and gateways on a local network.
 
 ---
