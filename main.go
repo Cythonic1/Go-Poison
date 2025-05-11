@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Pythonic01
 package main
 
 import (
@@ -19,6 +21,10 @@ var (
 )
 
 func main() {
+
+	if os.Geteuid() != 0 {
+		log.Fatal(": Run the program as root");
+	}
 
 	iface := utilites.Display_interfaces()
 

